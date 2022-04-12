@@ -33,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 public class CardController {
 
+    private static final Integer FIXED_USER_ID = 1;
+
     private final CardService cardService;
 
     public CardController(CardService cardService) {
@@ -41,6 +43,13 @@ public class CardController {
 
     @GetMapping
     public CardAllShowDto read(HttpServletRequest request) {
+
+        // debug = true일 경우 쿠키 체크 안하고 1번 내용 돌려주도록 적용
+        String debug = request.getHeader("debug");
+        if (debug != null && debug.equals("true")) {
+            return new CardAllShowDto(cardService.findAllCards(FIXED_USER_ID));
+        }
+
         Cookie[] cookies = Optional.ofNullable(request.getCookies())
             .orElseThrow(() -> new GlobalException(NO_COOKIE));
 
