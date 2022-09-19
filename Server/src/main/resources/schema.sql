@@ -1,12 +1,3 @@
-drop table IF EXISTS `user`;
-
-create TABLE `user` (
-    `userId` INT NOT NULL AUTO_INCREMENT,
-    `password` VARCHAR(50) NOT NULL,
-    `removed` TINYINT(1) NOT NULL DEFAULT 0,
-    PRIMARY KEY (`userId`)
-);
-
 drop table IF EXISTS `card`;
 
 create TABLE `card` (
@@ -33,4 +24,13 @@ create TABLE `history` (
     PRIMARY KEY (`historyId`),
     FOREIGN KEY (`userId`)
         REFERENCES `user` (`userId`)
+);
+
+drop table IF EXISTS `user`;
+
+create TABLE `user` (
+    `userId` INT NOT NULL AUTO_INCREMENT,
+    `password` VARCHAR(50) NOT NULL,
+    `removed` TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (`userId`)
 );

@@ -83,7 +83,7 @@ public class CardService {
         Long boardIdxOfNextCard = nextCard.getBoardIdx();
 
         if (cardRepository.checkIfExistBeforeCard(movedBoardName, boardIdxOfNextCard - BEFORE)) {
-            cardRepository.updateIdxByBoardName(movedBoardName);
+            cardRepository.updateIdxWithNoBatch(movedBoardName);
             nextCard = findCard(nextCardId);
         }
 
