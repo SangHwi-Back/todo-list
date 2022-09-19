@@ -20,9 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    private static final String LOG_FORMAT = "Exception Class : {}, Exception Point : {}, Message : {}";
+    private static final int TRACE_POINT = 1;
+
     @ExceptionHandler(GlobalException.class)
     public ResponseEntity<RestResponse> globalExceptionResolver(GlobalException exception) {
-
         ExceptionType exceptionType = exception.getExceptionType();
         RestResponse restResponse = RestResponse.of(exceptionType.getMessage());
         return new ResponseEntity<>(restResponse, exceptionType.getHttpStatus());
@@ -33,7 +35,6 @@ public class GlobalExceptionHandler {
         RestResponse restResponse = RestResponse.of(INVALID_TYPE.getMessage());
         return new ResponseEntity<>(restResponse, INVALID_TYPE.getHttpStatus());
     }
-
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<RestResponse> MethodArgumentNotValidException(
@@ -70,6 +71,19 @@ public class GlobalExceptionHandler {
         RestResponse restResponse = RestResponse.of(map);
 
         return new ResponseEntity<>(restResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<RestResponse> NotFoundCardException(RuntimeException exception) {
+        exception.printStackTrace();
+        StackTraceElement stackTraceElement = exception.getStackTrace()[TRACE_POINT];
+        log.error(LOG_FORMAT,
+            exception.getClass().getSimpleName(),
+            stackTraceElement.getClassName() + " : " + stackTraceElement.getMethodName(),
+            exception.getMessage());
+        RestResponse restResponse = RestResponse.of(ExceptionType.INTERNAL_SERVER_ERROR.getMessage());
+
+        return new ResponseEntity<>(restResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 }
