@@ -28,7 +28,7 @@ public class CardRepository {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     public List<Card> findAll(Integer userId) {
-        String sql = "SELECT * FROM card WHERE removed = FALSE AND userid = :userId ORDER BY boardIdx";
+        String sql = "SELECT * FROM card WHERE removed = FALSE AND userid = :userId ORDER BY boardidx";
         SqlParameterSource source = new MapSqlParameterSource("userId", userId);
 
         return namedParameterJdbcTemplate.query(sql, source, cardRowMapper());
@@ -43,7 +43,8 @@ public class CardRepository {
     public Integer save(Card card) {
         String sql = "INSERT INTO card (userid, cardtitle, cardcontent, boardname, boardidx, createdtime) VALUES (:userId, :cardTitle, :cardContent, :boardName, :boardIdx, :createdTime)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(card), keyHolder, new String[] {"cardId"});
+        namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(card), keyHolder,
+            new String[] {"cardId"});
         return Objects.requireNonNull(keyHolder.getKey()).intValue();
     }
 
@@ -82,27 +83,38 @@ public class CardRepository {
         return namedParameterJdbcTemplate.queryForObject(sql, namedParameter, Long.class);
     }
 
+    /**
+     * batch update - 삭제 예정
+     */
     public void updateIdxByBoardName(String movedBoardName) {
-        long idx = INTERVAL;
+        String sql = "UPDATE card SET boardIdx = :boardIdx where cardId = :cardId";
+
         List<Card> cards = findAllByBoardName(movedBoardName);
 
-        String sql = "UPDATE card SET boardIdx = :boardIdx where cardId = :cardId and boardName = :movedBoardName";
+        long idx = INTERVAL;
         List<MapSqlParameterSource> params = new ArrayList<>();
-
         for (Card card : cards) {
             MapSqlParameterSource source = new MapSqlParameterSource();
             source.addValue("boardIdx", idx);
             source.addValue("cardId", card.getCardId());
-            source.addValue("movedBoardName", movedBoardName);
             params.add(source);
             idx += INTERVAL;
         }
-
         namedParameterJdbcTemplate.batchUpdate(sql, params.toArray(MapSqlParameterSource[]::new));
     }
 
+    /**
+     * no-batch update
+     */
+    public void updateIdxWithNoBatch(String movedBoardName) {
+        String sql = "UPDATE card SET boardidx = (boardidx * 1000) WHERE boardname = :boardName";
+        MapSqlParameterSource source = new MapSqlParameterSource();
+        source.addValue("boardName", movedBoardName);
+        namedParameterJdbcTemplate.update(sql, source);
+    }
+
     public boolean checkIfExistBeforeCard(String movedBoardName, long boardIdx) {
-        String sql = "SELECT * FROM card WHERE boardName = :boardName AND boardIdx = :boardIdx";
+        String sql = "SELECT * FROM card WHERE boardname = :boardName AND boardidx = :boardIdx";
         MapSqlParameterSource source = new MapSqlParameterSource();
         source.addValue("boardName", movedBoardName);
         source.addValue("boardIdx", boardIdx);
@@ -115,8 +127,8 @@ public class CardRepository {
         }
     }
 
-    private List<Card> findAllByBoardName(String boardName) {
-        String sql = "SELECT * FROM card WHERE removed = FALSE AND boardName = :boardName ORDER BY boardIdx";
+    public List<Card> findAllByBoardName(String boardName) {
+        String sql = "SELECT * FROM card WHERE removed = FALSE AND boardname = :boardName ORDER BY boardidx";
         SqlParameterSource source = new MapSqlParameterSource("boardName", boardName);
 
         return namedParameterJdbcTemplate.query(sql, source, cardRowMapper());
